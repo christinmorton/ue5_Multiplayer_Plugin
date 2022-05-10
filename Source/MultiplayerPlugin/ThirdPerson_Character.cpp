@@ -3,6 +3,7 @@
 
 #include "ThirdPerson_Character.h"
 #include "OnlineSubsystem.h"
+#include "OnlineSessionSettings.h"
 
 // Sets default values
 AThirdPerson_Character::AThirdPerson_Character():
@@ -39,6 +40,22 @@ void AThirdPerson_Character::BeginPlay()
 void AThirdPerson_Character::CreateGameSession()
 {
 	// Called when pressing the one key
+	if (!OnlineSessionInterface.IsValid())
+	{
+		return;
+	}
+
+	auto ExisitingSession = OnlineSessionInterface->GetNamedSession(NAME_GameSession);
+	if (ExisitingSession != nullptr)
+	{
+		OnlineSessionInterface->DestroySession(NAME_GameSession);
+	}
+
+	OnlineSessionInterface->AddOnCreateSessionCompleteDelegate_Handle(CreateSessionCompleteDelegate);
+
+	TSharedPtr<FOnlineSessionSettings> SessionSettings = MakeShareable(new FOnlineSessionSettings());
+	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+	OnlineSessionInterface->CreateSession(*LocalPlayer->GetPreferredUniqueNetId(), NAME_GameSession, *SessionSettings);
 }
 
 void AThirdPerson_Character::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
