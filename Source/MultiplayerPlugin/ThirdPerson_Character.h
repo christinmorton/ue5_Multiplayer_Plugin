@@ -23,6 +23,9 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void CreateGameSession();
 
+	UFUNCTION(BlueprintCallable)
+	void JoinGameSession();
+
 	// callback function
 	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
 
