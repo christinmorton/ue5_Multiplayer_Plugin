@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Interfaces/OnlineSessionInterface.h"
 #include "ThirdPerson_Character.generated.h"
 
 UCLASS()
@@ -19,11 +20,24 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	UFUNCTION(BlueprintCallable)
+	void CreateGameSession();
+
+	// callback function
+	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	// Pointer to the online session interface
+	IOnlineSessionPtr OnlineSessionInterface;
+
+private:
+	
+	FOnCreateSessionCompleteDelegate CreateSessionCompleteDelegate;
 
 };
