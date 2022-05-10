@@ -7,7 +7,8 @@
 
 // Sets default values
 AThirdPerson_Character::AThirdPerson_Character():
-	CreateSessionCompleteDelegate(FOnCreateSessionCompleteDelegate::CreateUObject(this, &ThisClass::OnCreateSessionComplete))
+	CreateSessionCompleteDelegate(FOnCreateSessionCompleteDelegate::CreateUObject(this, &ThisClass::OnCreateSessionComplete)),
+	FindSessionsCompleteDelegate(FOnFindSessionsCompleteDelegate::CreateUObject(this, &ThisClass::OnFindSessionsComplete))
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -62,6 +63,7 @@ void AThirdPerson_Character::CreateGameSession()
 	SessionSettings->bAllowJoinViaPresence = true;
 	SessionSettings->bShouldAdvertise = true;
 	SessionSettings->bUsesPresence = true;
+	SessionSettings->bUseLobbiesIfAvailable = true;
 	
 	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
 	OnlineSessionInterface->CreateSession(*LocalPlayer->GetPreferredUniqueNetId(), NAME_GameSession, *SessionSettings);
@@ -71,6 +73,19 @@ void AThirdPerson_Character::JoinGameSession()
 {
 	// Find game sessions
 
+	SessionSearch = MakeShareable(new FOnlineSessionSearch());
+	
+	if (!OnlineSessionInterface.IsValid()) return;
+
+	OnlineSessionInterface->AddOnFindSessionsCompleteDelegate_Handle(FindSessionsCompleteDelegate);
+
+	// Session search settings
+	SessionSearch->MaxSearchResults = 10000;
+	SessionSearch->bIsLanQuery = false;
+	SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
+
+	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+	OnlineSessionInterface->FindSessions(*LocalPlayer->GetPreferredUniqueNetId(), SessionSearch.ToSharedRef());
 }
 
 void AThirdPerson_Character::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
@@ -93,6 +108,23 @@ void AThirdPerson_Character::OnCreateSessionComplete(FName SessionName, bool bWa
 				15.f,
 				FColor::Red,
 				FString(TEXT("Failed to create session!"))
+			);
+		}
+	}
+}
+
+void AThirdPerson_Character::OnFindSessionsComplete(bool bWasSuccessful)
+{
+	for (auto Result : SessionSearch->SearchResults)
+	{
+		FString Id = Result.GetSessionIdStr();
+		FString User = Result.Session.OwningUserName;
+		if (GEngine) {
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				15.f,
+				FColor::Blue,
+				FString::Printf(TEXT("Id: %s, User: %s"), *Id, *User)
 			);
 		}
 	}
