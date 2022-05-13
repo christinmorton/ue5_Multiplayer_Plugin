@@ -32,6 +32,9 @@ protected:
 	// callback function
 	void OnFindSessionsComplete(bool bWasSuccessful);
 
+	// callback function
+	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -46,6 +49,7 @@ private:
 	
 	FOnCreateSessionCompleteDelegate CreateSessionCompleteDelegate;
 	FOnFindSessionsCompleteDelegate FindSessionsCompleteDelegate;
+	FOnJoinSessionCompleteDelegate JoinSessionCompleteDelegate;
 
 	TSharedPtr<FOnlineSessionSearch> SessionSearch;
 };

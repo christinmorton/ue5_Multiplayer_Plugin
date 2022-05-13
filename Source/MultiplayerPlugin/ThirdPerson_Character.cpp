@@ -8,7 +8,8 @@
 // Sets default values
 AThirdPerson_Character::AThirdPerson_Character():
 	CreateSessionCompleteDelegate(FOnCreateSessionCompleteDelegate::CreateUObject(this, &ThisClass::OnCreateSessionComplete)),
-	FindSessionsCompleteDelegate(FOnFindSessionsCompleteDelegate::CreateUObject(this, &ThisClass::OnFindSessionsComplete))
+	FindSessionsCompleteDelegate(FOnFindSessionsCompleteDelegate::CreateUObject(this, &ThisClass::OnFindSessionsComplete)),
+	JoinSessionCompleteDelegate(FOnJoinSessionCompleteDelegate::CreateUObject(this, &ThisClass::OnJoinSessionComplete))
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -64,6 +65,7 @@ void AThirdPerson_Character::CreateGameSession()
 	SessionSettings->bShouldAdvertise = true;
 	SessionSettings->bUsesPresence = true;
 	SessionSettings->bUseLobbiesIfAvailable = true;
+	SessionSettings->Set(FName("MatchType"), FString("FreeForAll"), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 	
 	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
 	OnlineSessionInterface->CreateSession(*LocalPlayer->GetPreferredUniqueNetId(), NAME_GameSession, *SessionSettings);
@@ -80,7 +82,7 @@ void AThirdPerson_Character::JoinGameSession()
 	OnlineSessionInterface->AddOnFindSessionsCompleteDelegate_Handle(FindSessionsCompleteDelegate);
 
 	// Session search settings
-	SessionSearch->MaxSearchResults = 10000;
+	SessionSearch->MaxSearchResults = 1000000;
 	SessionSearch->bIsLanQuery = false;
 	SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
 
@@ -100,6 +102,12 @@ void AThirdPerson_Character::OnCreateSessionComplete(FName SessionName, bool bWa
 				FString::Printf(TEXT("Created session: %s"), *SessionName.ToString())
 			);
 		}
+
+		UWorld* World = GetWorld();
+		if (World)
+		{
+			World->ServerTravel(FString("/Game/ThirdPerson/Maps/Lobby?listen"));
+		}
 	}
 	else {
 		if (GEngine) {
@@ -115,10 +123,15 @@ void AThirdPerson_Character::OnCreateSessionComplete(FName SessionName, bool bWa
 
 void AThirdPerson_Character::OnFindSessionsComplete(bool bWasSuccessful)
 {
+	if (!OnlineSessionInterface.IsValid()) return;
+
 	for (auto Result : SessionSearch->SearchResults)
 	{
 		FString Id = Result.GetSessionIdStr();
 		FString User = Result.Session.OwningUserName;
+		FString MatchType;
+
+		Result.Session.SessionSettings.Get(FName("MatchType"), MatchType);
 		if (GEngine) {
 			GEngine->AddOnScreenDebugMessage(
 				-1,
@@ -126,6 +139,47 @@ void AThirdPerson_Character::OnFindSessionsComplete(bool bWasSuccessful)
 				FColor::Blue,
 				FString::Printf(TEXT("Id: %s, User: %s"), *Id, *User)
 			);
+		}
+		if (MatchType == FString("FreeForAll"))
+		{
+			if (GEngine) {
+				GEngine->AddOnScreenDebugMessage(
+					-1,
+					15.f,
+					FColor::Cyan,
+					FString::Printf(TEXT("Joining Match Type: %s"), *MatchType)
+				);
+			}
+
+			OnlineSessionInterface->AddOnJoinSessionCompleteDelegate_Handle(JoinSessionCompleteDelegate);
+
+			const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+			OnlineSessionInterface->JoinSession(*LocalPlayer->GetPreferredUniqueNetId(), NAME_GameSession, Result);
+		}
+	}
+}
+
+void AThirdPerson_Character::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
+{
+	if (!OnlineSessionInterface.IsValid()) return;
+
+
+	FString Address;
+	if (OnlineSessionInterface->GetResolvedConnectString(NAME_GameSession, Address))
+	{
+		if (GEngine) {
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				15.f,
+				FColor::Yellow,
+				FString::Printf(TEXT("Connect String: %s"), *Address)
+			);
+		}
+
+		APlayerController* PlayerController = GetGameInstance()->GetFirstLocalPlayerController();
+		if (PlayerController)
+		{
+			PlayerController->ClientTravel(Address, ETravelType::TRAVEL_Absolute);
 		}
 	}
 }
