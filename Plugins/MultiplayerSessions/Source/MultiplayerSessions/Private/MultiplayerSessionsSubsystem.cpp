@@ -12,3 +12,23 @@ UMultiplayerSessionsSubsystem::UMultiplayerSessionsSubsystem()
 		SessionInterface = Subsystem->GetSessionInterface();
 	}
 }
+
+void UMultiplayerSessionsSubsystem::CreateSession(int32 NumPublicConnections, FString MatchType)
+{
+}
+
+void UMultiplayerSessionsSubsystem::FindSessions(int32 MaxSearchResults)
+{
+}
+
+void UMultiplayerSessionsSubsystem::JoinSession(const FOnlineSessionSearchResult& SessionResult)
+{
+}
+
+void UMultiplayerSessionsSubsystem::DestroySession()
+{
+}
+
+void UMultiplayerSessionsSubsystem::StartSession()
+{
+}
