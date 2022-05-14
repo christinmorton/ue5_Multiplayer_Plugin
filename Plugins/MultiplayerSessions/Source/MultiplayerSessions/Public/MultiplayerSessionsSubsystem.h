@@ -27,6 +27,16 @@ public:
 	void StartSession();
 
 protected:
+	
+	// Internal callbacks for the delegates we'll add to the Online 
+	// Session Interface delegate list. We'll bind our bind our 
+	// MultiplayerSessionsSubsystem internal callbacks to these.
+	//
+	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
+	void OnFindSessionsComplete(bool bWasSuccessful);
+	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
+	void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
+	void OnStartSessionComplete(FName SessionName, bool bWasSuccessful);
 
 private:
 	IOnlineSessionPtr SessionInterface;
