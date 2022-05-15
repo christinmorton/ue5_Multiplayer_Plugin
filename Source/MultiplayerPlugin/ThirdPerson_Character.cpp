@@ -20,7 +20,7 @@ AThirdPerson_Character::AThirdPerson_Character():
 	{
 		OnlineSessionInterface = OnlineSubsystem->GetSessionInterface();
 
-		if (GEngine)
+		/*if (GEngine)
 		{
 			GEngine->AddOnScreenDebugMessage(
 				-1,
@@ -28,7 +28,7 @@ AThirdPerson_Character::AThirdPerson_Character():
 				FColor::Blue,
 				FString::Printf(TEXT("Found subsystem %s"), *OnlineSubsystem->GetSubsystemName().ToString())
 			);
-		}
+		}*/
 	}
 }
 
