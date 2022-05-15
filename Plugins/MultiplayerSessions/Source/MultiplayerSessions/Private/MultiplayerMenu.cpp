@@ -88,10 +88,15 @@ void UMultiplayerMenu::OnCreateSession(bool bWasSuccessful)
 			);
 		}
 
-		UWorld* World = GetWorld();
+		/*UWorld* World = GetWorld();
 		if (World)
 		{
 			World->ServerTravel(PathToLobby);
+		}*/
+
+		if (MultiplayerSessionsSubsystem)
+		{
+			MultiplayerSessionsSubsystem->StartSession();
 		}
 	}
 	else {
@@ -160,6 +165,14 @@ void UMultiplayerMenu::OnDestroySession(bool bWasSuccessful)
 
 void UMultiplayerMenu::OnStartSession(bool bWasSuccessful)
 {
+	if (bWasSuccessful)
+	{
+		UWorld* World = GetWorld();
+		if (World)
+		{
+			World->ServerTravel(PathToLobby);
+		}
+	}
 }
 
 void UMultiplayerMenu::HostButtonClicked()
